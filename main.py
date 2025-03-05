@@ -1,17 +1,14 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"message": "¡FastAPI está corriendo en Railway!"}
-
-@app.get("/ping")
-def ping():
-    return {"status": "ok"}
+class DataInput(BaseModel):
+    name: str
+    message: str
 
 @app.post("/data")
-async def receive_data(request: Request):
-    data = await request.json()
+async def receive_data(data: DataInput):
+    print(f"📥 Datos recibidos: {data}")  # Agregado para ver qué recibe FastAPI
     return {"received_data": data}
 
