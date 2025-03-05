@@ -69,3 +69,4 @@ def generate_graph(payload: DataInput):
 
     # Devolver el gráfico en base64
     return {"image_base64": base64_img}
+
