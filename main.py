@@ -7,9 +7,14 @@ import base64
 
 app = FastAPI()
 
-# Definimos modelos Pydantic para validar la estructura de "results"
+# Nuevo modelo para 'moda'
+class Moda(BaseModel):
+    range: str
+    count: int  # Ahora es entero
+
+# Ajustamos el modelo Statistics para usar el nuevo modelo Moda
 class Statistics(BaseModel):
-    moda: Dict[str, str]
+    moda: Moda
     mediaPonderada: str
     desviacionEstandar: str
     total: int
