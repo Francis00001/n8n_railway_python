@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 app = FastAPI()
 
@@ -9,3 +9,9 @@ def read_root():
 @app.get("/ping")
 def ping():
     return {"status": "ok"}
+
+@app.post("/data")
+async def receive_data(request: Request):
+    data = await request.json()
+    return {"received_data": data}
+
