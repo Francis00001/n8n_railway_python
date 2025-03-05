@@ -6,76 +6,63 @@ import io
 
 app = FastAPI()
 
-# Modelo para la parte "moda", donde "count" es un entero
 class Moda(BaseModel):
     range: str
-    count: int  # Ahora es entero
+    count: int
 
-# Modelo para las estadísticas usando el modelo Moda
 class Statistics(BaseModel):
     moda: Moda
     mediaPonderada: str
     desviacionEstandar: str
     total: int
 
-# Modelo para cada ítem de resultado
 class ResultItem(BaseModel):
     source: str
     ranges: Dict[str, int]
     statistics: Statistics
 
-# Modelo para el input completo, que debe tener una clave "data" con "results"
 class DataInput(BaseModel):
     data: Dict[str, List[ResultItem]]
 
-@app.post("/graph")
-def generate_graph(payload: DataInput):
-    """
-    Recibe el JSON en el formato:
-    {
-      "data": {
-        "results": [
-          {
-            "source": "Mp9",
-            "ranges": { ... },
-            "statistics": { ... }
-          },
-          ...
-        ]
-      }
-    }
-    Genera un gráfico de barras comparando el total de mediciones por fuente y devuelve la imagen PNG.
-    """
-
-    # Extraer el array "results"
+@app.post("/graph-subplots")
+def generate_graph_subplots(payload: DataInput):
     results = payload.data.get("results", [])
     if not results:
         return {"error": "No se recibieron resultados"}
 
-    # Preparar listas para las fuentes y totales
-    fuentes = []
-    totales = []
-    for item in results:
-        fuentes.append(item.source)
-        totales.append(item.statistics.total)
+    # Creamos una figura con 1 fila y N columnas (donde N es el número de 'results')
+    fig, axs = plt.subplots(1, len(results), figsize=(6 * len(results), 5))
 
-    # Crear el gráfico con matplotlib
-    plt.figure(figsize=(6, 4))
-    plt.bar(fuentes, totales, color=["blue", "green", "red"])
-    plt.title("Comparación de Totales por Fuente")
-    plt.xlabel("Fuente")
-    plt.ylabel("Total Mediciones")
+    # Si solo hay 1 resultado, axs no será una lista sino un objeto
+    if len(results) == 1:
+        axs = [axs]
 
-    # Guardar la figura en un buffer en formato PNG
+    for i, item in enumerate(results):
+        # Extraemos las claves y valores de ranges
+        x = list(item.ranges.keys())
+        y = list(item.ranges.values())
+
+        # Graficamos en el subplot correspondiente
+        axs[i].bar(x, y, color="skyblue")
+        axs[i].set_title(f"Distribución de {item.source}")
+        axs[i].set_xlabel("Rango de Temperaturas")
+        axs[i].set_ylabel("Número de Mediciones")
+        axs[i].tick_params(axis='x', rotation=45)  # Rotar etiquetas en X
+
+    plt.tight_layout()
+
+    # Convertir la figura a PNG en memoria
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
-    plt.close()  # Cerrar la figura para liberar memoria
+    plt.close(fig)
     buf.seek(0)
-    img_bytes = buf.getvalue()
 
-    # Retornar la imagen directamente con las cabeceras adecuadas
-    return Response(content=img_bytes,
-                    media_type="image/png",
-                    headers={"Content-Disposition": "attachment; filename=graph.png"})
+    # Devolver la imagen
+    return Response(
+        content=buf.getvalue(),
+        media_type="image/png",
+        headers={"Content-Disposition": "attachment; filename=subplots.png"}
+    )
+
 
 
