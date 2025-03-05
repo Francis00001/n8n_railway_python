@@ -9,6 +9,5 @@ class DataInput(BaseModel):
 
 @app.post("/data")
 async def receive_data(data: DataInput):
-    print(f"📥 Datos recibidos: {data}")  # Agregado para ver qué recibe FastAPI
-    return {"received_data": data}
-
+    print("Received:", data)
+    return {"received_data": data.dict()}
