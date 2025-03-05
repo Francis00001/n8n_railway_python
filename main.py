@@ -9,5 +9,5 @@ class DataInput(BaseModel):
 
 @app.post("/data")
 async def receive_data(data: DataInput):
-    print("Received:", data)
-    return {"received_data": data.dict()}
+    return {"received_data": data}
+
