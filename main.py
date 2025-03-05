@@ -1,29 +1,30 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel
 from typing import List, Dict
 import matplotlib.pyplot as plt
 import io
-import base64
 
 app = FastAPI()
 
-# Nuevo modelo para 'moda'
+# Modelo para la parte "moda", donde "count" es un entero
 class Moda(BaseModel):
     range: str
     count: int  # Ahora es entero
 
-# Ajustamos el modelo Statistics para usar el nuevo modelo Moda
+# Modelo para las estadísticas usando el modelo Moda
 class Statistics(BaseModel):
     moda: Moda
     mediaPonderada: str
     desviacionEstandar: str
     total: int
 
+# Modelo para cada ítem de resultado
 class ResultItem(BaseModel):
     source: str
     ranges: Dict[str, int]
     statistics: Statistics
 
+# Modelo para el input completo, que debe tener una clave "data" con "results"
 class DataInput(BaseModel):
     data: Dict[str, List[ResultItem]]
 
@@ -43,35 +44,38 @@ def generate_graph(payload: DataInput):
         ]
       }
     }
+    Genera un gráfico de barras comparando el total de mediciones por fuente y devuelve la imagen PNG.
     """
 
-    # Extraemos el array results
+    # Extraer el array "results"
     results = payload.data.get("results", [])
     if not results:
         return {"error": "No se recibieron resultados"}
 
-    # Ejemplo: Graficar la suma total de cada fuente (o lo que necesites)
+    # Preparar listas para las fuentes y totales
     fuentes = []
     totales = []
-
     for item in results:
         fuentes.append(item.source)
         totales.append(item.statistics.total)
 
-    # Crear la figura
+    # Crear el gráfico con matplotlib
     plt.figure(figsize=(6, 4))
     plt.bar(fuentes, totales, color=["blue", "green", "red"])
     plt.title("Comparación de Totales por Fuente")
     plt.xlabel("Fuente")
     plt.ylabel("Total Mediciones")
 
-    # Convertir a imagen en base64
+    # Guardar la figura en un buffer en formato PNG
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
+    plt.close()  # Cerrar la figura para liberar memoria
     buf.seek(0)
-    base64_img = base64.b64encode(buf.read()).decode("utf-8")
-    plt.close()
+    img_bytes = buf.getvalue()
 
-    # Devolver el gráfico en base64
-    return {"image_base64": base64_img}
+    # Retornar la imagen directamente con las cabeceras adecuadas
+    return Response(content=img_bytes,
+                    media_type="image/png",
+                    headers={"Content-Disposition": "attachment; filename=graph.png"})
+
 
