@@ -30,24 +30,20 @@ def generate_graph_subplots(payload: DataInput):
     if not results:
         return {"error": "No se recibieron resultados"}
 
-    # Creamos una figura con 1 fila y N columnas (donde N es el número de 'results')
+    # Crear la figura con subplots
     fig, axs = plt.subplots(1, len(results), figsize=(6 * len(results), 5))
 
-    # Si solo hay 1 resultado, axs no será una lista sino un objeto
     if len(results) == 1:
         axs = [axs]
 
     for i, item in enumerate(results):
-        # Extraemos las claves y valores de ranges
         x = list(item.ranges.keys())
         y = list(item.ranges.values())
-
-        # Graficamos en el subplot correspondiente
         axs[i].bar(x, y, color="skyblue")
         axs[i].set_title(f"Distribución de {item.source}")
         axs[i].set_xlabel("Rango de Temperaturas")
         axs[i].set_ylabel("Número de Mediciones")
-        axs[i].tick_params(axis='x', rotation=45)  # Rotar etiquetas en X
+        axs[i].tick_params(axis='x', rotation=45)
 
     plt.tight_layout()
 
@@ -57,12 +53,9 @@ def generate_graph_subplots(payload: DataInput):
     plt.close(fig)
     buf.seek(0)
 
-    # Devolver la imagen
+    # **Asegurar que se devuelve en binario correctamente**
     return Response(
         content=buf.getvalue(),
         media_type="image/png",
-        headers={"Content-Disposition": "attachment; filename=subplots.png"}
+        headers={"Content-Disposition": "inline; filename=subplots.png"}
     )
-
-
-
