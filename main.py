@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict
 import matplotlib.pyplot as plt
@@ -32,7 +33,6 @@ def generate_graph_subplots(payload: DataInput):
 
     # Crear la figura con subplots
     fig, axs = plt.subplots(1, len(results), figsize=(6 * len(results), 5))
-
     if len(results) == 1:
         axs = [axs]
 
@@ -53,9 +53,10 @@ def generate_graph_subplots(payload: DataInput):
     plt.close(fig)
     buf.seek(0)
 
-    # **Asegurar que se devuelve en binario correctamente**
-    return Response(
-        content=buf.getvalue(),
+    # Devolver la imagen como StreamingResponse para asegurar la salida binaria
+    return StreamingResponse(
+        buf,
         media_type="image/png",
         headers={"Content-Disposition": "inline; filename=subplots.png"}
     )
+
